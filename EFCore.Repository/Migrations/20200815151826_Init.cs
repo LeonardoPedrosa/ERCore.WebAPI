@@ -1,9 +1,9 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace ERCore.WebAPI.Migrations
+namespace EFCore.Repository.Migrations
 {
-    public partial class initial : Migration
+    public partial class Init : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -37,7 +37,7 @@ namespace ERCore.WebAPI.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "HeroBattles",
+                name: "HeroeBattles",
                 columns: table => new
                 {
                     heroeId = table.Column<int>(nullable: false),
@@ -45,15 +45,15 @@ namespace ERCore.WebAPI.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_HeroBattles", x => new { x.heroeId, x.battleId });
+                    table.PrimaryKey("PK_HeroeBattles", x => new { x.heroeId, x.battleId });
                     table.ForeignKey(
-                        name: "FK_HeroBattles_Battles_battleId",
+                        name: "FK_HeroeBattles_Battles_battleId",
                         column: x => x.battleId,
                         principalTable: "Battles",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_HeroBattles_Heroes_heroeId",
+                        name: "FK_HeroeBattles_Heroes_heroeId",
                         column: x => x.heroeId,
                         principalTable: "Heroes",
                         principalColumn: "id",
@@ -101,8 +101,8 @@ namespace ERCore.WebAPI.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_HeroBattles_battleId",
-                table: "HeroBattles",
+                name: "IX_HeroeBattles_battleId",
+                table: "HeroeBattles",
                 column: "battleId");
 
             migrationBuilder.CreateIndex(
@@ -120,7 +120,7 @@ namespace ERCore.WebAPI.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "HeroBattles");
+                name: "HeroeBattles");
 
             migrationBuilder.DropTable(
                 name: "SecretIdentities");

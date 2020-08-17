@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ERCore.WebAPI.Model
+namespace ERCore.Domain
 {
-  public class Weapon 
+  public class HeroeBattle
   {
-    public int id { get; set; }
-    public string name { get; set; }
     public int heroeId { get; set; }
+    public int battleId { get; set; }
     public Heroe heroe { get; set; }
+    public Battle battle { get; set; }
+
   }
 }
