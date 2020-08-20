@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using ERCore.Domain;
 using ERCore.Repository;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace ERCore.WebAPI.Controllers
@@ -18,26 +19,68 @@ namespace ERCore.WebAPI.Controllers
     {
       _context = context;
     }
-
-    //private static readonly string[] Summaries = new[]
-    //{
-    //        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-    //    };
-
-    //private readonly ILogger<HeroeController> _logger;
-
-    //public HeroeController(ILogger<HeroeController> logger)
-    //{
-    //  _logger = logger;
-    //}
+        
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Heroe>>> Get()
     {
-      //var listHeroe = (from h in _context.Heroes select h).ToList();
-      var listHeroe = _context.Heroes.ToList();
-      return listHeroe;
+      try
+      {
+        //var listHeroe = (from h in _context.Heroes select h).ToList();
+        var listHeroe = _context.Heroes.ToList();
+        return listHeroe;
+      }
+      catch (Exception e)
+      {
+        return BadRequest($"Erro: {e.Message}");
+      }
     }
+   
+
+    [HttpPost]
+    public ActionResult Post(Heroe model)
+    {
+      try
+      {        
+        _context.Heroes.Add(model);
+        _context.SaveChanges();
+
+        return Ok("Bazinga!");
+      }
+      catch (Exception e)
+      {
+        return BadRequest($"Erro: {e.Message}");
+      }
+    }
+
+
+    [HttpPut("{id}")]
+    public ActionResult Put(int id, Heroe model)
+    {
+      try
+      {
+        if (_context
+          .Heroes
+          .AsNoTracking()
+          .FirstOrDefault(h => h.id == id) != null)
+        {
+
+          _context.Heroes.Update(model);
+          _context.SaveChanges();
+
+          return Ok("Bazinga!");
+        }
+
+        return BadRequest("Não encontrado!");
+        
+      }
+      catch (Exception e)
+      {
+        return BadRequest($"Erro: {e.Message}");
+      }
+
+    }
+    
 
     [HttpGet("{nameHeroe}")]
     public ActionResult Get(string nameHeroe)
@@ -74,17 +117,32 @@ namespace ERCore.WebAPI.Controllers
       return heroe;
     }
 
-    [HttpGet("remove/{id}")]
-    public async Task<string> RemoveHeroe(int id)
+    [HttpDelete("{id}")]
+    public ActionResult Delete(int id)
     {
-      var heroe = _context.Heroes
-                  .Where(h => h.id == id)
-                  .Single();
+      try
+      {
+        Heroe heroe = _context
+          .Heroes
+          .AsNoTracking()
+          .FirstOrDefault(h=> h.id == id);
 
-      _context.Heroes.Remove(heroe);
-      _context.SaveChanges();
+        if (heroe != null)
+        {
+          _context.Remove(heroe);
+          _context.SaveChanges();
 
-      return heroe.name + " removido com sucesso!";
+          return Ok("BAZINGA!");
+        }
+        else
+        {
+          return BadRequest("Não encotrado!");
+        }
+      }
+      catch (Exception e)
+      {
+        return BadRequest($"Erro: {e.Message}");
+      }
     }
   }
 }
