@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using EFCore.Repository;
 using ERCore.Repository;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -11,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
 
 namespace ERCore.WebAPI
 {
@@ -31,6 +33,13 @@ namespace ERCore.WebAPI
       {
         options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
       });
+
+      services.AddScoped<IEFCoreRepository, EFCoreRepository>();
+
+      services.AddControllers().AddNewtonsoftJson(options =>
+           options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+       );
+
       services.AddControllers();
     }
 

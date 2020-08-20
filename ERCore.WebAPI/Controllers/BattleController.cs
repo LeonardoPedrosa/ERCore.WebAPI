@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using EFCore.Repository;
 using ERCore.Domain;
 using ERCore.Repository;
 using Microsoft.AspNetCore.Mvc;
@@ -15,99 +16,104 @@ namespace ERCore.WebAPI.Controllers
   [ApiController]
   public class BattleController : ControllerBase
   {
-    public readonly HeroeContext _context;
-    public BattleController(HeroeContext context)
+    private readonly IEFCoreRepository _repo;
+    public BattleController(IEFCoreRepository repo)
     {
-      _context = context;
+      this._repo = repo;
     }
     // GET: api/<BattleController>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Battle>>> Get()
+    public async Task<IActionResult> Get()
     {
-      var list = _context.Battles.ToList();
+      try
+      {
+        var battles = await _repo.GetAllBattle(true);
 
-      return list;
+        return Ok(battles);
+      }
+      catch (Exception e)
+      {
+        return BadRequest($"Erro {e.Message}");
+      }      
     }
 
     // GET api/<BattleController>/5
     [HttpGet("{id}")]
-    public string Get(int id)
+    public async Task<IActionResult> Get(int id)
     {
-      return "value";
+      try
+      {
+        var battle = await _repo.GetBattlesById(id, true);
+        return Ok(battle);
+      }
+      catch (Exception e)
+      {
+        return BadRequest($"Erro: {e.Message}");
+      }
     }
 
     // POST api/<BattleController>
     [HttpPost]
-    public ActionResult Post(Battle model)
+    public async Task<IActionResult> Post(Battle model)
     {
       try
       {
-        _context.Battles.Add(model);
-        _context.SaveChanges();
+        _repo.Add(model);
 
-        return Ok("Bazinga!");
+        if(await _repo.SaveChangeAsync())
+        {
+          return Ok("Bazinga!");
+        }         
       }
       catch (Exception e)
       {
         return BadRequest($"Erro: {e.Message}");
       }
+      return BadRequest("Não salvou.");
     }
 
     // PUT api/<BattleController>/5
     [HttpPut("{id}")]
-    public ActionResult Put(int id, Battle model)
+    public async Task<IActionResult> Put(int id, Battle model)
     {
       try
       {
-        if (_context
-        .Battles
-        .AsNoTracking()
-        .FirstOrDefault(b => b.id == id) != null)
+        var battle = await _repo.GetBattlesById(id);
+        if (battle != null)
         {
-          _context.Update(model);
-          _context.SaveChanges();
+          _repo.Update(model);
 
-          return Ok("BAZINGA!");
-        }
-        else
-        {
-          return BadRequest("Não encontrado!");
+          if (await _repo.SaveChangeAsync())
+            return Ok("BAZINGA!");
         }
       }
       catch (Exception e)
       {
         return BadRequest($"Erro: {e.Message}");
       }
-      
-    }
+      return BadRequest("Não encotrado!");
+    }  
 
     // DELETE api/<BattleController>/5
     [HttpDelete("{id}")]
-    public ActionResult Delete(int id)
+    public async Task<IActionResult> Delete(int id)
     {
       try
       {
-        Battle battle = _context
-          .Battles
-          .AsNoTracking()
-          .FirstOrDefault(b => b.id == id);
-
-        if(battle != null)
+        var battle = await _repo.GetBattlesById(id);
+        if (battle != null)
         {
-          _context.Remove(battle);
-          _context.SaveChanges();
+          _repo.Delete(battle);
 
-          return Ok("BAZINGA!");
-        }
-        else
-        {
-          return BadRequest("Não encotrado!");
+          if(await _repo.SaveChangeAsync())
+            return Ok("BAZINGA!");
         }
       }
       catch (Exception e)
       {
         return BadRequest($"Erro: {e.Message}");
       }
+      return BadRequest("Não encotrado!");
     }
   }
 }

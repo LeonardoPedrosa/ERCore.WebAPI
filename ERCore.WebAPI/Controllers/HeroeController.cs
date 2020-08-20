@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using EFCore.Repository;
 using ERCore.Domain;
-using ERCore.Repository;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace ERCore.WebAPI.Controllers
 {
@@ -14,135 +10,134 @@ namespace ERCore.WebAPI.Controllers
   [Route("api/[controller]")]
   public class HeroeController : ControllerBase
   {
-    public readonly HeroeContext _context;
-    public HeroeController(HeroeContext context)
+    public readonly IEFCoreRepository _repo;
+    public HeroeController(IEFCoreRepository repo)
     {
-      _context = context;
+      _repo = repo;
     }
-        
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Heroe>>> Get()
+    public async Task<IActionResult> Get()
     {
       try
       {
-        //var listHeroe = (from h in _context.Heroes select h).ToList();
-        var listHeroe = _context.Heroes.ToList();
-        return listHeroe;
+        var listHeroe = _repo.GetAll();
+        return Ok(listHeroe);
       }
       catch (Exception e)
       {
         return BadRequest($"Erro: {e.Message}");
       }
     }
-   
 
-    [HttpPost]
-    public ActionResult Post(Heroe model)
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
     {
       try
-      {        
-        _context.Heroes.Add(model);
-        _context.SaveChanges();
-
-        return Ok("Bazinga!");
+      {
+        var heroe = _repo.GetHeroeById(id);
+        return Ok(heroe);
       }
       catch (Exception e)
       {
         return BadRequest($"Erro: {e.Message}");
       }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Post(Heroe model)
+    {
+      try
+      {
+        _repo.Add(model);
+        if (await _repo.SaveChangeAsync())
+        {
+          return Ok("Bazinga!");
+        }
+      }
+      catch (Exception e)
+      {
+        return BadRequest($"Erro: {e.Message}");
+      }
+      return BadRequest("Não salvou!");
     }
 
 
     [HttpPut("{id}")]
-    public ActionResult Put(int id, Heroe model)
+    public async Task<IActionResult> Put(int id, Heroe model)
     {
       try
       {
-        if (_context
-          .Heroes
-          .AsNoTracking()
-          .FirstOrDefault(h => h.id == id) != null)
+        var heroe = _repo.GetHeroeById(id);
+        if (heroe != null)
         {
+          _repo.Update(model);
 
-          _context.Heroes.Update(model);
-          _context.SaveChanges();
-
-          return Ok("Bazinga!");
-        }
-
-        return BadRequest("Não encontrado!");
-        
+          if (await _repo.SaveChangeAsync())
+            return Ok("BAZINGA!");
+        }        
       }
       catch (Exception e)
       {
         return BadRequest($"Erro: {e.Message}");
       }
-
+      return BadRequest("Não encontrado!");
     }
     
 
-    [HttpGet("{nameHeroe}")]
-    public ActionResult Get(string nameHeroe)
-    {
-      var heroe = new Heroe() { name = nameHeroe };
+    //[HttpGet("{nameHeroe}")]
+    //public ActionResult Get(string nameHeroe)
+    //{
+    //  var heroe = new Heroe() { name = nameHeroe };
 
-      _context.Add(heroe);
-      _context.SaveChanges();
+    //  _context.Add(heroe);
+    //  _context.SaveChanges();
 
-      return Ok();
-    }
+    //  return Ok();
+    //}
 
-    [HttpGet("filter/{name}")]
-    public async Task<ActionResult<IEnumerable<Heroe>>> GetFilter(string name)
-    {
-      //var listHeroe = (from h in _context.Heroes where h.name.Contains(name) select h).ToList();
-      var listHeroe = _context.Heroes
-                      .Where(h => h.name.Contains(name))  
-                      .ToList();
-      return listHeroe;
-    }
+    //[HttpGet("filter/{name}")]
+    //public async Task<ActionResult<IEnumerable<Heroe>>> GetFilter(string name)
+    //{
+    //  //var listHeroe = (from h in _context.Heroes where h.name.Contains(name) select h).ToList();
+    //  var listHeroe = _context.Heroes
+    //                  .Where(h => h.name.Contains(name))  
+    //                  .ToList();
+    //  return listHeroe;
+    //}
 
-    [HttpGet("update/{id}/{value}")]
-    public async Task<ActionResult<Heroe>> UpdateNameHeroe(int id, string value)
-    {
-      var heroe = _context.Heroes
-                  .Where(h => h.id == id)
-                  .FirstOrDefault();
+    //[HttpGet("update/{id}/{value}")]
+    //public async Task<ActionResult<Heroe>> UpdateNameHeroe(int id, string value)
+    //{
+    //  var heroe = _context.Heroes
+    //              .Where(h => h.id == id)
+    //              .FirstOrDefault();
 
-      heroe.name = value;
+    //  heroe.name = value;
 
-      _context.SaveChanges();
+    //  _context.SaveChanges();
       
-      return heroe;
-    }
+    //  return heroe;
+    //}
 
     [HttpDelete("{id}")]
-    public ActionResult Delete(int id)
+    public async Task<IActionResult> Delete(int id, Heroe model)
     {
       try
       {
-        Heroe heroe = _context
-          .Heroes
-          .AsNoTracking()
-          .FirstOrDefault(h=> h.id == id);
-
-        if (heroe != null)
+        var heroe = _repo.GetHeroeById(id);
+        if(heroe != null)
         {
-          _context.Remove(heroe);
-          _context.SaveChanges();
-
-          return Ok("BAZINGA!");
+          _repo.Delete(model);
         }
-        else
-        {
-          return BadRequest("Não encotrado!");
-        }
-      }
+          if(await _repo.SaveChangeAsync())        
+            return Ok("BAZINGA!");
+      }        
       catch (Exception e)
       {
         return BadRequest($"Erro: {e.Message}");
       }
+      return BadRequest("Não encontrado!");
     }
   }
 }
